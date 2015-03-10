@@ -39,12 +39,16 @@ class MainIDEFrame(wx.Frame):
         menubar.Append(projectMenu, "&Project")
         menubar.Append(runMenu, "&Run")
         menubar.Append(helpMenu, "&Help")
+        for mi in projectMenu.GetMenuItems():
+            mi.Enable(False)
         self.SetMenuBar(menubar)
 
         self.panel = wx.Panel(self)
         self.editor = HideEditor(self.panel, pos=(300, 50), size=(400, 400))
 
         self.Bind(wx.EVT_MENU, self.OnNew, newMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnOpen, openMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnSaveAs, saveAsMenuItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, quitMenuItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutMenuItem)
 
@@ -54,6 +58,29 @@ class MainIDEFrame(wx.Frame):
 
     def OnNew(self, e):
         pass
+
+    def OnOpen(self, e):
+        dlg = wx.FileDialog(self, message="Open", wildcard="F4/Helen sources (*.f4)|*.f4",
+                            style=wx.FD_OPEN)
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            return
+        fname = dlg.GetPath()
+        f = open(fname, 'r')
+        self.editor.SetText(f.read())
+        f.close()
+        dlg.Destroy()
+        pass
+
+    def OnSaveAs(self, e):
+        dlg = wx.FileDialog(self, message="Save As", wildcard="F4/Helen sources (*.f4)|*.f4",
+                            style=wx.FD_SAVE)
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            return
+        fname = dlg.GetPath()
+        f = open(fname, 'w')
+        f.write(self.editor.GetText())
+        f.close()
+        dlg.Destroy()
 
     def OnQuit(self, e):
         self.Close()
