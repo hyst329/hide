@@ -1,4 +1,5 @@
 from hdver import verstr
+from hdeditor import HideEditor
 
 __author__ = 'hyst329'
 import wx
@@ -13,6 +14,7 @@ class MainIDEFrame(wx.Frame):
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()
         editMenu = wx.Menu()
+        projectMenu = wx.Menu()
         runMenu = wx.Menu()
         helpMenu = wx.Menu()
         newMenuItem = fileMenu.Append(wx.ID_ANY, "New\tCtrl+N", "Create a new .f4 file")
@@ -23,25 +25,30 @@ class MainIDEFrame(wx.Frame):
         cutMenuItem = editMenu.Append(wx.ID_ANY, "Cut\tCtrl+X", "Move the selection to clipboard")
         copyMenuItem = editMenu.Append(wx.ID_ANY, "Copy\tCtrl+C", "Copy the selection to clipboard")
         pasteMenuItem = editMenu.Append(wx.ID_ANY, "Paste\tCtrl+V", "Copy clipboard contents to the selection")
+        newProjectMenuItem = projectMenu.Append(wx.ID_ANY, "New Project", "Create new project")
+        openProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Open Project...", "Create new project")
+        saveProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project", "Create new project")
+        saveProjectAsMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project As...", "Create new project")
+        closeProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Close Project", "Create new project")
         runMenuItem = runMenu.Append(wx.ID_ANY, "Run\tF9", "Runs the project")
         runMenuItem = runMenu.Append(wx.ID_ANY, "Generate C file\tF10", "Generate C code from project")
         runMenuItem = runMenu.Append(wx.ID_ANY, "Generate and compile\tF11", "Generate and try to compile it with GCC")
         aboutMenuItem = helpMenu.Append(wx.ID_ANY, "About\tCtrl+F1", "Display info about hide")
         menubar.Append(fileMenu, "&File")
         menubar.Append(editMenu, "&Edit")
+        menubar.Append(projectMenu, "&Project")
         menubar.Append(runMenu, "&Run")
         menubar.Append(helpMenu, "&Help")
         self.SetMenuBar(menubar)
 
-        self.sizer = wx.GridSizer(2, 2, 5, 5)
-        self.editor = wx.stc.StyledTextCtrl()
-        self.sizer.Add(self.editor, 1, wx.ALIGN_RIGHT)
-        self.SetSizer(self.sizer)
+        self.panel = wx.Panel(self)
+        self.editor = HideEditor(self.panel, pos=(300, 50), size=(400, 400))
 
         self.Bind(wx.EVT_MENU, self.OnNew, newMenuItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, quitMenuItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutMenuItem)
 
+        self.Layout()
         self.Centre()
         self.Show()
 
