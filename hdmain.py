@@ -5,11 +5,17 @@ __author__ = 'hyst329'
 import wx
 import wx.lib.dialogs
 import wx.stc
+import json
+import subprocess
 
 
 class MainIDEFrame(wx.Frame):
     def __init__(self, parent, title):
         super(MainIDEFrame, self).__init__(parent, title=title, size=(800, 600))
+
+        # Loading the config
+        self.config = json.load(open("config.json", "r"))
+        self.helpath = self.config["helpath"]
 
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()
@@ -31,8 +37,9 @@ class MainIDEFrame(wx.Frame):
         saveProjectAsMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project As...", "Create new project")
         closeProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Close Project", "Create new project")
         runMenuItem = runMenu.Append(wx.ID_ANY, "Run\tF9", "Runs the project")
-        runMenuItem = runMenu.Append(wx.ID_ANY, "Generate C file\tF10", "Generate C code from project")
-        runMenuItem = runMenu.Append(wx.ID_ANY, "Generate and compile\tF11", "Generate and try to compile it with GCC")
+        generateMenuItem = runMenu.Append(wx.ID_ANY, "Generate C file\tF10", "Generate C code from project")
+        genAndCompMenuItem = runMenu.Append(wx.ID_ANY, "Generate and compile\tF11",
+                                            "Generate and try to compile it with GCC")
         aboutMenuItem = helpMenu.Append(wx.ID_ANY, "About\tCtrl+F1", "Display info about hide")
         menubar.Append(fileMenu, "&File")
         menubar.Append(editMenu, "&Edit")
@@ -42,15 +49,33 @@ class MainIDEFrame(wx.Frame):
         for mi in projectMenu.GetMenuItems():
             mi.Enable(False)
         self.SetMenuBar(menubar)
+        font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL,
+                       wx.FONTWEIGHT_NORMAL, False, 'Fixedsys',
+                       wx.FONTENCODING_CP1252)
+        self.editor = HideEditor(self, font=font)
+        self.output = wx.TextCtrl(self, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.output.SetFont(font)
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.editor, 5, wx.EXPAND)
+        self.sizer.Add(self.output, 3, wx.EXPAND)
+        self.SetSizer(self.sizer)
 
-        self.panel = wx.Panel(self)
-        self.editor = HideEditor(self.panel, pos=(300, 50), size=(400, 400))
+        self.sb = self.CreateStatusBar()
 
         self.Bind(wx.EVT_MENU, self.OnNew, newMenuItem)
         self.Bind(wx.EVT_MENU, self.OnOpen, openMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnSave, saveMenuItem)
         self.Bind(wx.EVT_MENU, self.OnSaveAs, saveAsMenuItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, quitMenuItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnRun, runMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnGenerate, generateMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnGenAndComp, genAndCompMenuItem)
+
+        self.timer = wx.Timer(self, wx.ID_ANY)
+        self.Bind(wx.EVT_TIMER, self.OnTimer)
+
+        self.timer.Start(1000)
 
         self.Layout()
         self.Centre()
@@ -65,11 +90,22 @@ class MainIDEFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_CANCEL:
             return
         fname = dlg.GetPath()
+        self.editor.filename = fname
         f = open(fname, 'r')
         self.editor.SetText(f.read())
         f.close()
         dlg.Destroy()
+        self.editor.modified = False
         pass
+
+    def OnSave(self, e):
+        if not self.editor.filename:
+            self.OnSaveAs(e)
+        else:
+            f = open(self.editor.filename, 'w')
+            f.write(self.editor.GetText())
+            f.close()
+            self.editor.modified = False
 
     def OnSaveAs(self, e):
         dlg = wx.FileDialog(self, message="Save As", wildcard="F4/Helen sources (*.f4)|*.f4",
@@ -80,6 +116,7 @@ class MainIDEFrame(wx.Frame):
         f = open(fname, 'w')
         f.write(self.editor.GetText())
         f.close()
+        self.editor.modified = False
         dlg.Destroy()
 
     def OnQuit(self, e):
@@ -92,6 +129,44 @@ class MainIDEFrame(wx.Frame):
         dlg = wx.lib.dialogs.ScrolledMessageDialog(self, about, "About hide")
         dlg.ShowModal()
         dlg.Destroy()
+
+    def OnTimer(self, e):
+        s = "hide - %s%s" % (self.editor.filename, "*" if self.editor.modified else "")
+        self.SetTitle(s)
+
+    def OnRun(self, e):
+        if not self.editor.filename:
+            wx.MessageBox("Please save the file first!", "File needs to be saved")
+            return
+        elif self.editor.modified:
+            self.OnSave(e)
+        cmd = "%s %s -i" % (self.helpath, self.editor.filename)
+        out = subprocess.check_output(cmd)
+        self.output.Clear()
+        self.output.SetValue(out)
+
+    def OnGenerate(self, e):
+        if not self.editor.filename:
+            wx.MessageBox("Please save the file first!", "File needs to be saved")
+            return
+        elif self.editor.modified:
+            self.OnSave(e)
+        cmd = "%s %s -g" % (self.helpath, self.editor.filename)
+        out = subprocess.check_output(cmd)
+        self.output.Clear()
+        self.output.SetValue(out)
+
+    def OnGenAndComp(self, e):
+        if not self.editor.filename:
+            wx.MessageBox("Please save the file first!", "File needs to be saved")
+            return
+        elif self.editor.modified:
+            self.OnSave(e)
+        cmd = "%s %s -gc" % (self.helpath, self.editor.filename)
+        out = subprocess.check_output(cmd)
+        self.output.Clear()
+        self.output.SetValue(out)
+
 
 if __name__ == '__main__':
     app = wx.App()

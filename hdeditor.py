@@ -35,13 +35,10 @@ class HideEditor(wx.stc.StyledTextCtrl):
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=0,
-                 name="editor"):
+                 name="editor", font=None):
         wx.stc.StyledTextCtrl.__init__(self, parent, id, pos, size, style, name)
         self.encoder = codecs.getencoder("utf-8")
 
-        font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL,
-                       wx.FONTWEIGHT_NORMAL, False, 'Fixedsys',
-                       wx.FONTENCODING_CP1252)
         for i in range(32):
             self.StyleSetFont(i, font)
 
@@ -58,6 +55,9 @@ class HideEditor(wx.stc.StyledTextCtrl):
 
         self.Bind(wx.stc.EVT_STC_CHANGE, self.onChanged)
         self.Bind(wx.stc.EVT_STC_CHARADDED, self.onCharAdded)
+
+        self.filename = None
+        self.modified = False
 
     def coloriseWord(self, styled_text, style):
         text = self.GetText()
@@ -82,6 +82,10 @@ class HideEditor(wx.stc.StyledTextCtrl):
         return len(self.encoder(text[: pos])[0])
 
     def onChanged(self, event):
+        self.modified = True
+        # Uncolorise
+        self.StartStyling(0, 0xff)
+        self.SetStyling(self.GetTextLength(), 0)
         for kw in keywords:
             self.coloriseWord(kw, self.STYLE_KEYWORD)
         for t in types:
