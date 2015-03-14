@@ -1,3 +1,4 @@
+import sys
 from hdsettings import SettingsDialog
 from hdver import verstr, verstrs
 from hdeditor import HideEditor
@@ -9,6 +10,7 @@ import wx.stc
 import wx.adv
 import json
 import subprocess
+import os
 
 
 class MainIDEFrame(wx.Frame):
@@ -16,7 +18,19 @@ class MainIDEFrame(wx.Frame):
         super(MainIDEFrame, self).__init__(parent, title=title, size=(800, 600))
 
         # Loading the config
-        self.config = json.load(open("config.json", "r"))
+        if getattr(sys, 'frozen', False):
+            path = os.path.dirname(sys.executable)
+        else:
+            path = os.path.dirname(os.path.realpath(__file__))
+        if os.path.isfile(path + "/config.json"):
+            cfg = open("config.json", "r")
+            self.config = json.load(cfg)
+        else:
+            wx.MessageBox("No config file found. Creating new - please check your settings",
+                          "Warning", wx.ICON_WARNING)
+            self.config = {"helpath": "C:/f4main/f4main.exe"}
+            cfg = open("config.json", "w")
+            json.dump(self.config, cfg)
         self.helpath = self.config["helpath"]
 
         menubar = wx.MenuBar()
@@ -152,7 +166,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnRun(self, e):
         if not self.editor.filename:
-            wx.MessageBox("Please save the file first!", "File needs to be saved")
+            wx.MessageBox("Please save the file first!", "File needs to be saved", wx.ICON_WARNING)
             return
         elif self.editor.modified:
             self.OnSave(e)
@@ -163,7 +177,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnGenerate(self, e):
         if not self.editor.filename:
-            wx.MessageBox("Please save the file first!", "File needs to be saved")
+            wx.MessageBox("Please save the file first!", "File needs to be saved", wx.ICON_WARNING)
             return
         elif self.editor.modified:
             self.OnSave(e)
@@ -174,7 +188,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnGenAndComp(self, e):
         if not self.editor.filename:
-            wx.MessageBox("Please save the file first!", "File needs to be saved")
+            wx.MessageBox("Please save the file first!", "File needs to be saved", wx.ICON_WARNING)
             return
         elif self.editor.modified:
             self.OnSave(e)
