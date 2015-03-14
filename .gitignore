@@ -109,3 +109,4 @@ crashlytics-build.properties
 
 parser.out
 parsetab.py
+config.json

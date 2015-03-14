@@ -1,10 +1,12 @@
-from hdver import verstr
+from hdsettings import SettingsDialog
+from hdver import verstr, verstrs
 from hdeditor import HideEditor
 
 __author__ = 'hyst329'
 import wx
 import wx.lib.dialogs
 import wx.stc
+import wx.adv
 import json
 import subprocess
 
@@ -21,6 +23,7 @@ class MainIDEFrame(wx.Frame):
         fileMenu = wx.Menu()
         editMenu = wx.Menu()
         projectMenu = wx.Menu()
+        optionsMenu = wx.Menu()
         runMenu = wx.Menu()
         helpMenu = wx.Menu()
         newMenuItem = fileMenu.Append(wx.ID_ANY, "New\tCtrl+N", "Create a new .f4 file")
@@ -32,10 +35,11 @@ class MainIDEFrame(wx.Frame):
         copyMenuItem = editMenu.Append(wx.ID_ANY, "Copy\tCtrl+C", "Copy the selection to clipboard")
         pasteMenuItem = editMenu.Append(wx.ID_ANY, "Paste\tCtrl+V", "Copy clipboard contents to the selection")
         newProjectMenuItem = projectMenu.Append(wx.ID_ANY, "New Project", "Create new project")
-        openProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Open Project...", "Create new project")
-        saveProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project", "Create new project")
-        saveProjectAsMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project As...", "Create new project")
-        closeProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Close Project", "Create new project")
+        openProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Open Project...", "Open an existing project")
+        saveProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project", "Save the project")
+        saveProjectAsMenuItem = projectMenu.Append(wx.ID_ANY, "Save Project As...", "Save the project as...")
+        closeProjectMenuItem = projectMenu.Append(wx.ID_ANY, "Close Project", "Close the project")
+        preferencesMenuItem = optionsMenu.Append(wx.ID_ANY, "Preferences...\tCtrl+P", "hide preferences")
         runMenuItem = runMenu.Append(wx.ID_ANY, "Run\tF9", "Runs the project")
         generateMenuItem = runMenu.Append(wx.ID_ANY, "Generate C file\tF10", "Generate C code from project")
         genAndCompMenuItem = runMenu.Append(wx.ID_ANY, "Generate and compile\tF11",
@@ -44,6 +48,7 @@ class MainIDEFrame(wx.Frame):
         menubar.Append(fileMenu, "&File")
         menubar.Append(editMenu, "&Edit")
         menubar.Append(projectMenu, "&Project")
+        menubar.Append(optionsMenu, "&Options")
         menubar.Append(runMenu, "&Run")
         menubar.Append(helpMenu, "&Help")
         for mi in projectMenu.GetMenuItems():
@@ -68,6 +73,7 @@ class MainIDEFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnSaveAs, saveAsMenuItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, quitMenuItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutMenuItem)
+        self.Bind(wx.EVT_MENU, self.OnPreferences, preferencesMenuItem)
         self.Bind(wx.EVT_MENU, self.OnRun, runMenuItem)
         self.Bind(wx.EVT_MENU, self.OnGenerate, generateMenuItem)
         self.Bind(wx.EVT_MENU, self.OnGenAndComp, genAndCompMenuItem)
@@ -123,16 +129,26 @@ class MainIDEFrame(wx.Frame):
         self.Close()
 
     def OnAbout(self, e):
-        about = "hide - Helen IDE\nVersion %s" \
-                "\nCopyright 2015 by hyst329" \
-                "\nPowered by wxPython toolkit" % verstr
-        dlg = wx.lib.dialogs.ScrolledMessageDialog(self, about, "About hide")
-        dlg.ShowModal()
-        dlg.Destroy()
+        info = wx.adv.AboutDialogInfo()
+        info.SetName("hide")
+        info.SetVersion(verstrs)
+        info.SetDescription("hide is a F4/Helen IDE (source code editor).\nPowered by wxPython toolkit")
+        info.SetCopyright("(C) 2015 hyst329")
+        info.SetWebSite("http://github.com/hyst329/hide")
+        info.AddDeveloper("hyst329")
+        info.AddTranslator("hyst329")
+        wx.adv.AboutBox(info)
 
     def OnTimer(self, e):
         s = "hide - %s%s" % (self.editor.filename, "*" if self.editor.modified else "")
         self.SetTitle(s)
+
+    def OnPreferences(self, e):
+        sdlg = SettingsDialog(self)
+        sdlg.LoadConfig(self.config)
+        sdlg.InitUI()
+        sdlg.ShowModal()
+        sdlg.Destroy()
 
     def OnRun(self, e):
         if not self.editor.filename:
