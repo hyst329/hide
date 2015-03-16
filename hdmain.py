@@ -1,3 +1,4 @@
+import re
 import sys
 from hdsettings import SettingsDialog
 from hdver import verstr, verstrs
@@ -112,6 +113,11 @@ class MainIDEFrame(wx.Frame):
         self.editor.modified = False
 
     def OnOpen(self, e):
+        if self.editor.modified:
+            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+                                   "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
+            if dlg.ShowModal() == wx.YES:
+                self.OnSave(e)
         dlg = wx.FileDialog(self, message="Open", wildcard="F4/Helen sources (*.f4)|*.f4",
                             style=wx.FD_OPEN)
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -130,11 +136,18 @@ class MainIDEFrame(wx.Frame):
             self.OnSaveAs(e)
         else:
             f = open(self.editor.filename, 'w')
-            f.write(self.editor.GetText().replace('\r', '\r\n'))
+            text = self.editor.GetText()
+            text = re.sub(r'\r[^\n]', '\r\n', text)
+            f.write(text)
             f.close()
             self.editor.modified = False
 
     def OnSaveAs(self, e):
+        if self.editor.modified:
+            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+                                   "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
+            if dlg.ShowModal() == wx.YES:
+                self.OnSave(e)
         dlg = wx.FileDialog(self, message="Save As", wildcard="F4/Helen sources (*.f4)|*.f4",
                             style=wx.FD_SAVE)
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -142,12 +155,19 @@ class MainIDEFrame(wx.Frame):
         fname = dlg.GetPath()
         self.editor.filename = fname
         f = open(fname, 'w')
-        f.write(self.editor.GetText().replace('\r', '\r\n'))
+        text = self.editor.GetText()
+        text = re.sub(r'\r[^\n]', '\r\n', text)
+        f.write(text)
         f.close()
         self.editor.modified = False
         dlg.Destroy()
 
     def OnQuit(self, e):
+        if self.editor.modified:
+            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+                                   "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
+            if dlg.ShowModal() == wx.YES:
+                self.OnSave(e)
         cfg = open("config.json", "w")
         json.dump(self.config, cfg)
         self.Close()
