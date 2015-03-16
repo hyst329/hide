@@ -102,7 +102,14 @@ class MainIDEFrame(wx.Frame):
         self.Show()
 
     def OnNew(self, e):
-        pass
+        if self.editor.modified:
+            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+                                   "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
+            if dlg.ShowModal() == wx.YES:
+                self.OnSave(e)
+        self.editor.ClearAll()
+        self.editor.filename = None
+        self.editor.modified = False
 
     def OnOpen(self, e):
         dlg = wx.FileDialog(self, message="Open", wildcard="F4/Helen sources (*.f4)|*.f4",
@@ -123,7 +130,7 @@ class MainIDEFrame(wx.Frame):
             self.OnSaveAs(e)
         else:
             f = open(self.editor.filename, 'w')
-            f.write(self.editor.GetText())
+            f.write(self.editor.GetText().replace('\r', '\r\n'))
             f.close()
             self.editor.modified = False
 
@@ -133,13 +140,16 @@ class MainIDEFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_CANCEL:
             return
         fname = dlg.GetPath()
+        self.editor.filename = fname
         f = open(fname, 'w')
-        f.write(self.editor.GetText())
+        f.write(self.editor.GetText().replace('\r', '\r\n'))
         f.close()
         self.editor.modified = False
         dlg.Destroy()
 
     def OnQuit(self, e):
+        cfg = open("config.json", "w")
+        json.dump(self.config, cfg)
         self.Close()
 
     def OnAbout(self, e):
@@ -171,9 +181,12 @@ class MainIDEFrame(wx.Frame):
         elif self.editor.modified:
             self.OnSave(e)
         cmd = "%s %s -i" % (self.helpath, self.editor.filename)
-        out = subprocess.check_output(cmd)
-        self.output.Clear()
-        self.output.SetValue(out)
+        try:
+            out = subprocess.check_output(cmd)
+            self.output.Clear()
+            self.output.SetValue(out)
+        except subprocess.CalledProcessError as e:
+            wx.MessageBox(str(e), "Error!", wx.ICON_ERROR)
 
     def OnGenerate(self, e):
         if not self.editor.filename:
@@ -182,9 +195,12 @@ class MainIDEFrame(wx.Frame):
         elif self.editor.modified:
             self.OnSave(e)
         cmd = "%s %s -g" % (self.helpath, self.editor.filename)
-        out = subprocess.check_output(cmd)
-        self.output.Clear()
-        self.output.SetValue(out)
+        try:
+            out = subprocess.check_output(cmd)
+            self.output.Clear()
+            self.output.SetValue(out)
+        except subprocess.CalledProcessError as e:
+            wx.MessageBox(str(e), "Error!", wx.ICON_ERROR)
 
     def OnGenAndComp(self, e):
         if not self.editor.filename:
@@ -193,9 +209,12 @@ class MainIDEFrame(wx.Frame):
         elif self.editor.modified:
             self.OnSave(e)
         cmd = "%s %s -gc" % (self.helpath, self.editor.filename)
-        out = subprocess.check_output(cmd)
-        self.output.Clear()
-        self.output.SetValue(out)
+        try:
+            out = subprocess.check_output(cmd)
+            self.output.Clear()
+            self.output.SetValue(out)
+        except subprocess.CalledProcessError as e:
+            wx.MessageBox(str(e), "Error!", wx.ICON_ERROR)
 
 
 if __name__ == '__main__':
