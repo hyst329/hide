@@ -104,7 +104,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnNew(self, e):
         if self.editor.modified:
-            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+            dlg = wx.MessageDialog(self, "File is modified after last save. Should hide save it?",
                                    "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
             if dlg.ShowModal() == wx.YES:
                 self.OnSave(e)
@@ -114,7 +114,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnOpen(self, e):
         if self.editor.modified:
-            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+            dlg = wx.MessageDialog(self, "File is modified after last save. Should hide save it?",
                                    "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
             if dlg.ShowModal() == wx.YES:
                 self.OnSave(e)
@@ -144,7 +144,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnSaveAs(self, e):
         if self.editor.modified:
-            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+            dlg = wx.MessageDialog(self, "File is modified after last save. Should hide save it?",
                                    "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
             if dlg.ShowModal() == wx.YES:
                 self.OnSave(e)
@@ -164,7 +164,7 @@ class MainIDEFrame(wx.Frame):
 
     def OnQuit(self, e):
         if self.editor.modified:
-            dlg = wx.MessageDialog("File is modified after last save. Should hide save it?",
+            dlg = wx.MessageDialog(self, "File is modified after last save. Should hide save it?",
                                    "Unsaved file", wx.ICON_QUESTION, wx.YES_NO)
             if dlg.ShowModal() == wx.YES:
                 self.OnSave(e)
